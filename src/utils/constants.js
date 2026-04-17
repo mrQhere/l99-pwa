@@ -2,16 +2,15 @@
 // Update these with your actual values after setup
 
 // Set to true for demo mode (simulated predictions without trained models)
-export const DEMO_MODE = true;
+export const DEMO_MODE = false;
 
 // HuggingFace Spaces backend URL
-// After deploying, replace with: https://mrQhere-l99-backend.hf.space
-export const HF_SPACES_URL = 'https://mrQhere-l99-backend.hf.space';
+export const HF_SPACES_URL = import.meta.env.VITE_HF_SPACES_URL || 'https://example-backend.hf.space';
 
 // Supabase credentials
 // Get these from: supabase.com → Your Project → Settings → API
-export const SUPABASE_URL = 'https://okazouqbtshyyegrczwz.supabase.co';
-export const SUPABASE_ANON_KEY = 'sb_publishable_1avoLqtLYX71Q5bfMNlHIA_l4jNCMzH';
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Operator credentials (hardcoded login)
 export const OPERATORS = {
@@ -49,4 +48,4 @@ export const TRIAGE_LEVELS = {
 
 // App version
 export const APP_VERSION = '1.0.0';
-export const APP_NAME = 'L99';
+export const APP_NAME = 'Eye Scan';

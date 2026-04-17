@@ -12,7 +12,7 @@ export default function PatientsPage() {
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState({
-    name: '', age: '', gender: 'Male', contact: '', address: '', medical_history: ''
+    name: '', age: '', gender: 'Male', contact: '', address: '', medical_history: '', assigned_doctor: ''
   });
 
   useEffect(() => { loadPatients(); }, []);
@@ -38,14 +38,16 @@ export default function PatientsPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
+      const { assigned_doctor, ...patientData } = form;
       await createPatient({
-        ...form,
+        ...patientData,
         age: form.age ? parseInt(form.age) : null,
         operator_id: operator.id,
+        medical_history: assigned_doctor ? `Assigned Doctor: Dr. ${assigned_doctor}\n${form.medical_history}` : form.medical_history,
       });
       showSuccess('Patient registered successfully');
       setShowForm(false);
-      setForm({ name: '', age: '', gender: 'Male', contact: '', address: '', medical_history: '' });
+      setForm({ name: '', age: '', gender: 'Male', contact: '', address: '', medical_history: '', assigned_doctor: '' });
       loadPatients();
     } catch (err) {
       showError('Failed to register patient: ' + err.message);
@@ -107,6 +109,10 @@ export default function PatientsPage() {
                 <input className="input-field" value={form.contact} onChange={e => setForm({...form, contact: e.target.value})} placeholder="+91 ..." />
               </div>
               <div className="input-group full-width">
+                <label className="input-label">Assigned Doctor</label>
+                <input className="input-field" value={form.assigned_doctor} onChange={e => setForm({...form, assigned_doctor: e.target.value})} placeholder="Dr. Name (Optional)" />
+              </div>
+              <div className="input-group full-width">
                 <label className="input-label">Address</label>
                 <input className="input-field" value={form.address} onChange={e => setForm({...form, address: e.target.value})} placeholder="Full address" />
               </div>
@@ -148,6 +154,7 @@ export default function PatientsPage() {
                   <th>Age</th>
                   <th>Gender</th>
                   <th>Contact</th>
+                  <th>Doctor</th>
                   <th>Registered</th>
                   <th>Actions</th>
                 </tr>
@@ -159,6 +166,7 @@ export default function PatientsPage() {
                     <td>{p.age || '—'}</td>
                     <td>{p.gender || '—'}</td>
                     <td className="font-mono text-sm">{p.contact || '—'}</td>
+                    <td className="text-sm" style={{ color: 'var(--cyan)' }}>{p.medical_history?.includes('Assigned Doctor: ') ? p.medical_history.split('\n')[0].replace('Assigned Doctor: ', '') : '—'}</td>
                     <td className="text-sm text-dim">{new Date(p.created_at).toLocaleDateString()}</td>
                     <td>
                       <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(p.id)} title="Delete">

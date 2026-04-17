@@ -33,13 +33,16 @@ export default function ScanPage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [isCloudInference, setIsCloudInference] = useState(false);
   const [processingStep, setProcessingStep] = useState('');
   const [exifData, setExifData] = useState(null);
   const [qualityData, setQualityData] = useState(null);
 
+  const [manualPriority, setManualPriority] = useState('Auto');
   const videoRef = useRef(null);
   const streamRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   useEffect(() => {
     return () => stopCamera();
@@ -88,12 +91,16 @@ export default function ScanPage() {
     setPhoneSearch('');
   }
 
-  // ── Camera ──────────────────────────────────────────────
   async function startCamera() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 960 } }
-      });
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        });
+      } catch (e) {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       setCameraActive(true);
@@ -146,6 +153,7 @@ export default function ScanPage() {
 
       setProcessingStep('Checking backend...');
       const isOnline = navigator.onLine && await checkBackendHealth();
+      setIsCloudInference(isOnline);
 
       let result;
       if (isOnline) {
@@ -160,9 +168,16 @@ export default function ScanPage() {
 
       setProcessingStep('Computing triage...');
       const triage = computeTriage(result.severity_grade, result.confidence, result.uncertainty);
-      result.triage = triage.level;
-      result.triage_action = triage.action;
-      result.triage_timeframe = triage.timeframe;
+      
+      if (manualPriority !== 'Auto') {
+        result.triage = manualPriority;
+        result.triage_action = manualPriority === 'Emergency' ? 'IMMEDIATE specialist referral' : 'Clinician override applied';
+        result.triage_timeframe = 'Manual Override';
+      } else {
+        result.triage = triage.level;
+        result.triage_action = triage.action;
+        result.triage_timeframe = triage.timeframe;
+      }
 
       // Thumbnail
       const tc = document.createElement('canvas');
@@ -338,15 +353,21 @@ export default function ScanPage() {
         {!imagePreview && !cameraActive && (
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-              <button className="btn btn-primary btn-lg" onClick={startCamera}>
+              <button className="btn btn-primary btn-lg" onClick={() => cameraInputRef.current?.click()}>
                 <Camera size={22} /> Open Camera
               </button>
-              <button className="btn btn-secondary btn-lg" onClick={() => fileInputRef.current?.click()}>
+              <button className="btn btn-secondary btn-lg" onClick={() => galleryInputRef.current?.click()}>
                 <Upload size={22} /> Upload Image
               </button>
             </div>
+            {/* Native Camera trigger */}
             <input
-              ref={fileInputRef} type="file" accept="image/*" capture="environment"
+              ref={cameraInputRef} type="file" accept="image/*" capture="environment"
+              onChange={handleFileUpload} style={{ display: 'none' }}
+            />
+            {/* Native Gallery trigger */}
+            <input
+              ref={galleryInputRef} type="file" accept="image/*"
               onChange={handleFileUpload} style={{ display: 'none' }}
             />
             <p className="text-sm text-dim mt-16">Capture or upload a retinal fundus image</p>
@@ -382,8 +403,25 @@ export default function ScanPage() {
               </div>
             )}
 
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 16 }}>
+              <div className="search-box" style={{ flex: 1, maxWidth: 220 }}>
+                <select 
+                  className="input-field" 
+                  value={manualPriority} 
+                  onChange={(e) => setManualPriority(e.target.value)}
+                  style={{ cursor: 'pointer', appearance: 'auto' }}
+                >
+                  <option value="Auto">Priority: Auto Computing</option>
+                  <option value="Routine">Priority: Routine (Low)</option>
+                  <option value="Priority">Priority: Standard</option>
+                  <option value="Urgent">Priority: Urgent</option>
+                  <option value="Emergency">Priority: EMERGENCY</option>
+                </select>
+              </div>
+            </div>
+
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button className="btn btn-secondary" onClick={() => { setImageBlob(null); setImagePreview(null); setExifData(null); setQualityData(null); }}>
+              <button className="btn btn-secondary" onClick={() => { setImageBlob(null); setImagePreview(null); setExifData(null); setQualityData(null); setManualPriority('Auto'); }}>
                 <RefreshCw size={18} /> Retake
               </button>
               <button className="btn btn-primary btn-lg" onClick={runAnalysis}>
@@ -397,14 +435,18 @@ export default function ScanPage() {
       {/* Processing overlay */}
       {processing && (
         <div className="glass-card" style={{ textAlign: 'center', padding: 48 }}>
-          <div className="scan-ring" style={{ marginBottom: 24 }}>
-            <div className="scan-ring-circle" />
-            <div className="scan-ring-circle" />
-            <div className="scan-ring-circle" />
-            <div className="scan-ring-center">
-              <div className="scan-ring-text">Analyzing</div>
+          {isCloudInference ? (
+            <div className="cloud-ring" style={{ marginBottom: 24 }}>☁️</div>
+          ) : (
+            <div className="scan-ring" style={{ marginBottom: 24 }}>
+              <div className="scan-ring-circle" />
+              <div className="scan-ring-circle" />
+              <div className="scan-ring-circle" />
+              <div className="scan-ring-center">
+                <div className="scan-ring-text">Analyzing</div>
+              </div>
             </div>
-          </div>
+          )}
           <p className="text-cyan font-mono" style={{ fontSize: 13 }}>{processingStep}</p>
         </div>
       )}

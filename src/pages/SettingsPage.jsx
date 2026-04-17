@@ -13,6 +13,24 @@ export default function SettingsPage() {
   const { operator, logout } = useAuth();
   const [queueCount, setQueueCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
+  const [canInstall, setCanInstall] = useState(!!window.deferredPrompt);
+
+  useEffect(() => {
+    const checkPrompt = () => setCanInstall(!!window.deferredPrompt);
+    window.addEventListener('beforeinstallprompt', checkPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', checkPrompt);
+  }, []);
+
+  async function handleInstallApp() {
+    if (window.deferredPrompt) {
+      window.deferredPrompt.prompt();
+      const { outcome } = await window.deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        window.deferredPrompt = null;
+        setCanInstall(false);
+      }
+    }
+  }
 
   useEffect(() => {
     getQueueCount().then(setQueueCount).catch(() => {});
@@ -100,6 +118,13 @@ export default function SettingsPage() {
             <InfoItem label="Online" value={navigator.onLine ? 'Yes' : 'No'} color={navigator.onLine ? 'green' : 'red'} />
             <InfoItem label="PWA Installed" value={window.matchMedia('(display-mode: standalone)').matches ? 'Yes' : 'No'} />
           </div>
+          {canInstall && (
+            <div style={{ marginTop: 16 }}>
+              <button className="btn btn-primary btn-sm full-width" onClick={handleInstallApp}>
+                Install App to Home Screen
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Tech stack */}

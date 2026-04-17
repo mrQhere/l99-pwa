@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, NavLink } from 'react-router-dom';
-import { OPERATORS } from './utils/constants';
+import { OPERATORS, HF_SPACES_URL } from './utils/constants';
 import { onToast } from './services/toastService';
 import {
   LayoutDashboard, ScanLine, Users, UserCog, History, FileText,
@@ -36,16 +36,44 @@ export default function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [toasts, setToasts] = useState([]);
   const [scanResult, setScanResult] = useState(null);
+  const [backendStatus, setBackendStatus] = useState('checking');
 
-  // Online/offline detection
+  useEffect(() => {
+    if (!isOnline) {
+      setBackendStatus('offline');
+      return;
+    }
+    const checkBackend = async () => {
+      try {
+        const res = await fetch(HF_SPACES_URL + '/api/health');
+        if (res.ok) setBackendStatus('online');
+        else setBackendStatus('error');
+      } catch {
+        setBackendStatus('error');
+      }
+    };
+    checkBackend();
+    const interval = setInterval(checkBackend, 30000);
+    return () => clearInterval(interval);
+  }, [isOnline]);
+
+  // Online/offline detection & PWA install prompt
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
     const goOffline = () => setIsOnline(false);
+    const handleInstallPrompt = (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+    };
+    
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
+    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+    
     return () => {
       window.removeEventListener('online', goOnline);
       window.removeEventListener('offline', goOffline);
+      window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
     };
   }, []);
 
@@ -109,8 +137,8 @@ export default function App() {
           <button className="hamburger-btn" onClick={() => setSidebarOpen(true)}>
             <Menu size={24} />
           </button>
-          <span className="font-heading text-cyan" style={{ fontSize: 16, fontWeight: 700 }}>L99</span>
-          <div style={{ width: 24 }} />
+          <span className="font-heading text-cyan" style={{ fontSize: 16, fontWeight: 700 }}>Eye Scan</span>
+          <StatusBadge status={backendStatus} />
         </div>
 
         {/* Mobile overlay */}
@@ -120,11 +148,14 @@ export default function App() {
           {/* Sidebar */}
           <aside className={`app-sidebar ${sidebarOpen ? 'open' : ''}`}>
             <div className="sidebar-logo">
-              <div className="sidebar-logo-icon">L99</div>
+              <div className="sidebar-logo-icon">EYE</div>
               <div>
-                <div className="sidebar-logo-text">L99</div>
+                <div className="sidebar-logo-text">Eye Scan</div>
                 <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>Ophthalmic AI</div>
               </div>
+            </div>
+            <div style={{ marginBottom: 24, padding: '0 12px' }}>
+              <StatusBadge status={backendStatus} />
             </div>
 
             <nav className="sidebar-nav">
@@ -181,5 +212,21 @@ function SidebarLink({ to, icon, label, onClick }) {
       {icon}
       <span>{label}</span>
     </NavLink>
+  );
+}
+
+function StatusBadge({ status }) {
+  const meta = {
+    online: { color: 'var(--green)', text: 'Cloud AI Online' },
+    error: { color: 'var(--yellow)', text: 'Local Mode (Cloud wait)' },
+    offline: { color: 'var(--red)', text: 'Offline (Local AI)' },
+    checking: { color: 'var(--text-dim)', text: 'Checking connection...' },
+  }[status];
+  
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10,  color: meta.color, fontWeight: 600, padding: '4px 8px', background: 'var(--bg-secondary)', borderRadius: 12, border: `1px solid ${meta.color}40`, whiteSpace: 'nowrap' }}>
+      <div style={{ width: 6, height: 6, borderRadius: '50%', background: meta.color, boxShadow: `0 0 5px ${meta.color}`, animation: status === 'checking' ? 'pulse 1s infinite' : 'none' }} />
+      {meta.text}
+    </div>
   );
 }

@@ -31,6 +31,7 @@ export async function addToQueue(scanData) {
   const entry = {
     ...scanData,
     synced: false,
+    is_offline: true,
     created_at: new Date().toISOString(),
   };
   const id = await db.add(STORE_QUEUE, entry);
@@ -114,11 +115,13 @@ export async function syncQueue(syncFunction) {
  */
 export async function clearSynced() {
   const db = await getDB();
-  const tx = db.transaction(STORE_QUEUE, 'readwrite');
+  const tx = db.transaction(STORE_QUEUE, 'readonly');
   const index = tx.store.index('synced');
-  let cursor = await index.openCursor(IDBKeyRange.only(true));
-  while (cursor) {
-    await cursor.delete();
-    cursor = await cursor.continue();
+  const keys = await index.getAllKeys(IDBKeyRange.only(true));
+  
+  if (keys.length > 0) {
+    const txDelete = db.transaction(STORE_QUEUE, 'readwrite');
+    await Promise.all(keys.map(key => txDelete.store.delete(key)));
+    await txDelete.done;
   }
 }

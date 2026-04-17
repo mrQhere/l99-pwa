@@ -86,13 +86,13 @@ export default function LoginPage() {
                 fontFamily: 'var(--font-heading)', fontSize: 14, fontWeight: 900, color: '#000',
                 animation: loading ? 'spinRing 1s linear infinite' : 'logoPulse 3s ease-in-out infinite',
               }}>
-                L99
+                EYE SCAN
               </div>
             </div>
             <h1 className="login-title" style={{
               opacity: mounted ? 1 : 0,
               transition: 'opacity 0.6s ease 0.3s',
-            }}>L99</h1>
+            }}>Eye Scan</h1>
             <p className="login-subtitle" style={{
               opacity: mounted ? 1 : 0,
               transition: 'opacity 0.6s ease 0.5s',

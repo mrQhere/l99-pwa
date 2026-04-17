@@ -101,13 +101,29 @@ export async function generateReport({ scan, patient, heatmapBase64, originalIma
 
   y += 32;
 
+  // Original Image
+  if (originalImageBase64) {
+    doc.setFontSize(10);
+    doc.setTextColor(136, 136, 170);
+    doc.text('ORIGINAL SCAN', margin, y + 6);
+    try {
+      const imgType = originalImageBase64.includes('image/png') ? 'PNG' : 'JPEG';
+      const imgData = originalImageBase64.startsWith('data:') ? originalImageBase64 : `data:image/jpeg;base64,${originalImageBase64}`;
+      doc.addImage(imgData, imgType, margin, y + 10, 60, 60);
+    } catch (e) {
+      // Skip on error
+    }
+  }
+
   // Heatmap image if available
   if (heatmapBase64) {
     doc.setFontSize(10);
     doc.setTextColor(136, 136, 170);
-    doc.text('GRAD-CAM ACTIVATION MAP', margin, y + 6);
+    doc.text('GRAD-CAM ACTIVATION MAP', margin + 80, y + 6);
     try {
-      doc.addImage(`data:image/png;base64,${heatmapBase64}`, 'PNG', margin, y + 10, 60, 60);
+      const type = heatmapBase64.includes('image/jpeg') ? 'JPEG' : 'PNG';
+      const data = heatmapBase64.startsWith('data:') ? heatmapBase64 : `data:image/png;base64,${heatmapBase64}`;
+      doc.addImage(data, type, margin + 80, y + 10, 60, 60);
     } catch (e) {
       // Skip if image fails
     }
@@ -197,7 +213,7 @@ export async function generateReport({ scan, patient, heatmapBase64, originalIma
   doc.text(disclaimerLines, margin, 275);
 
   // Save
-  const filename = `L99_Report_${patient?.name?.replace(/\s+/g, '_') || 'Patient'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+  const filename = `EyeScan_Report_${patient?.name?.replace(/\s+/g, '_') || 'Patient'}_${new Date().toISOString().slice(0, 10)}.pdf`;
   doc.save(filename);
   return filename;
 }

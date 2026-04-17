@@ -185,9 +185,12 @@ export default function ResultsPage() {
                 <FileText size={18} /> Generate PDF Report
               </button>
               <button className="btn btn-secondary btn-block" onClick={() => {
-                const text = `L99 Scan Result: ${result.diagnosis} (Grade ${result.severity_grade}). Confidence: ${(result.confidence * 100).toFixed(1)}%. Triage: ${result.triage}.`;
-                const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-                window.open(url, '_blank');
+                const text = `Eye Scan Result: ${result.diagnosis} (Grade ${result.severity_grade}). Confidence: ${(result.confidence * 100).toFixed(1)}%. Triage: ${result.triage}.`;
+                if (navigator.share) {
+                  navigator.share({ title: 'Eye Scan Result', text: text }).catch(console.error);
+                } else {
+                  window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                }
               }}>
                 <Share2 size={18} /> Share via WhatsApp
               </button>

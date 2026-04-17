@@ -16,9 +16,9 @@ export async function loadONNXModel() {
     if (session) return true;
 
     const ort = await import('onnxruntime-web');
-    ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/';
+    ort.env.wasm.wasmPaths = '/';
 
-    session = await ort.InferenceSession.create('/mobilenetv3_l99.onnx', {
+    session = await ort.InferenceSession.create('/mobilenetv3_eyescan.onnx', {
       executionProviders: ['wasm'],
     });
 
@@ -26,7 +26,7 @@ export async function loadONNXModel() {
     return true;
   } catch (err) {
     console.warn('ONNX model failed to load:', err.message);
-    return false;
+    throw new Error(err.message);
   }
 }
 
@@ -37,9 +37,10 @@ export async function loadONNXModel() {
  */
 export async function runOfflineInference(imageBlob) {
   if (!session) {
-    const loaded = await loadONNXModel();
-    if (!loaded) {
-      throw new Error('ONNX model not available for offline inference');
+    try {
+      await loadONNXModel();
+    } catch (err) {
+      throw new Error(`ONNX Load Error: ${err.message}`);
     }
   }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getScans, deleteScan } from '../services/scanService';
 import { exportToCSV, SCAN_COLUMNS } from '../services/csvExport';
+import { generateReport } from '../services/reportGenerator';
 import { showSuccess, showError } from '../services/toastService';
 import { History, Download, Trash2, Eye, FileText, Search } from 'lucide-react';
 
@@ -26,6 +27,20 @@ export default function HistoryPage() {
       showSuccess('Scan deleted');
       loadScans();
     } catch (err) { showError('Failed: ' + err.message); }
+  }
+
+  async function handleGeneratePDF(s) {
+    try {
+      const filename = await generateReport({
+        scan: s,
+        patient: s.patients || { name: 'Not specified' },
+        heatmapBase64: s.heatmap_base64,
+        originalImageBase64: s.image_thumbnail,
+      });
+      showSuccess(`Report saved: ${filename}`);
+    } catch (err) {
+      showError('Failed to generate report: ' + err.message);
+    }
   }
 
   const filtered = filter === 'all' ? scans :
@@ -106,6 +121,9 @@ export default function HistoryPage() {
                   <td className="text-xs text-dim">{s.is_offline ? '📱 Offline' : '☁️ Online'}</td>
                   <td>
                     <div className="flex gap-8">
+                      <button className="btn btn-ghost btn-sm" onClick={() => handleGeneratePDF(s)} title="Download PDF Report">
+                        <FileText size={14} className="text-cyan" />
+                      </button>
                       <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(s.id)} title="Delete">
                         <Trash2 size={14} className="text-red" />
                       </button>

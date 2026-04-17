@@ -137,8 +137,8 @@ export default function DashboardPage() {
           SYSTEM STATUS
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-          <StatusItem label="Backend" status={isOnline ? 'Online' : 'Offline'} color={isOnline ? 'green' : 'yellow'} />
-          <StatusItem label="Offline Model" status="Ready" color="green" />
+          <StatusItem label="Cloud Network" status={isOnline ? 'Active' : 'Offline'} color={isOnline ? 'green' : 'yellow'} />
+          <StatusItem label="Offline Engine" status="Ready" color="green" />
           <StatusItem label="Database" status={isOnline ? 'Connected' : 'Local Cache'} color={isOnline ? 'green' : 'yellow'} />
           <StatusItem label="Version" status="v1.0.0" color="cyan" />
         </div>
