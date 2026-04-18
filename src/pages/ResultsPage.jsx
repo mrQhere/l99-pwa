@@ -201,11 +201,30 @@ export default function ResultsPage() {
                 <FileText size={18} /> Generate PDF Report
               </button>
               <button className="btn btn-secondary btn-block" onClick={() => {
-                const text = `Eye Scan Result: ${result.diagnosis} (Grade ${result.severity_grade}). Confidence: ${(result.confidence * 100).toFixed(1)}%. Triage: ${result.triage}.`;
+                const uncStr = result.uncertainty >= 0 ? `\nUncertainty: ${result.uncertainty.toFixed(4)} ${result.uncertainty > 0.15 ? '⚠ High' : '✓ Low'}` : '';
+                const qualStr = result.quality ? `\nImage Quality: ${result.quality.qualityWeight.toFixed(3)}` : '';
+                const patStr = result.patient ? `\n👤 Patient: ${result.patient.name} (Age ${result.patient.age || '?'}, ${result.patient.gender || '?'})` : '';
+                const text = [
+                  `🔬 *L99 Eye Scan — Diagnostic Result*`,
+                  ``,
+                  `*Diagnosis:* ${result.diagnosis}`,
+                  `*Classification:* ${SEVERITY_LABELS[result.severity_grade] || `Grade ${result.severity_grade}`}`,
+                  `*Confidence:* ${(result.confidence * 100).toFixed(1)}%${uncStr}`,
+                  ``,
+                  `*Triage Level:* ${result.triage}`,
+                  `*Action Required:* ${result.triage_action}`,
+                  `*Timeframe:* ${result.triage_timeframe}`,
+                  ``,
+                  patStr,
+                  `*Model:* ${result.is_offline ? '📱 Offline (MobileNetV3)' : '☁️ Cloud (EfficientNet-B4)'}${qualStr}`,
+                  ``,
+                  `⚕️ _AI screening result — must be confirmed by a qualified ophthalmologist before clinical decisions._`,
+                  `📄 Full clinical PDF report available from the Eye Scan app.`,
+                ].filter(Boolean).join('\n');
                 if (navigator.share) {
-                  navigator.share({ title: 'Eye Scan Result', text: text }).catch(console.error);
+                  navigator.share({ title: 'Eye Scan Diagnostic Result', text }).catch(console.error);
                 } else {
-                  window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
                 }
               }}>
                 <Share2 size={18} /> Share via WhatsApp

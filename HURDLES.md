@@ -51,3 +51,25 @@ Building a clinical-grade medical PWA that operates in zero-connectivity environ
 
 > [!TIP]
 > **Key Takeaway**: When building for the edge, assume the hardware is weak and the network is non-existent. Over-allocate resources for local image processing rather than relying on server-side cleanup.
+
+## 7. Vercel Deployment Without GitHub Integration
+
+**The Problem**: The standard Vercel workflow assumes a GitHub-connected repository for automatic CI/CD deployments. In our case, the repository is managed independently on GitHub and the Vercel project is **not linked** to GitHub. This breaks the typical `git push → auto-deploy` pipeline.
+
+**The Consequences**:
+- Every production deployment requires a manual `vercel --prod` CLI invocation from the local machine.
+- There is no automatic preview URL for pull requests.
+- Environment variables must be managed directly in the Vercel dashboard — they are not loaded from `.env` automatically on the server side.
+- The `VITE_HF_SPACES_URL` and `VITE_SUPABASE_*` variables must be manually set in **Vercel Dashboard → Project → Settings → Environment Variables**.
+
+**The Solution**:
+- **Build locally first**: Always run `npm run build` and verify the `dist/` folder before deploying.
+- **Deploy with CLI**: Use `npx vercel --prod` from the project root. Vercel will use the `vercel.json` config to determine build settings.
+- **Manual env sync**: After any `.env` change, update the corresponding variables in the Vercel dashboard manually.
+- **GitHub remains the source of truth**: All code changes are pushed to GitHub separately using standard `git push` commands. The two systems (GitHub and Vercel) operate independently.
+
+**Workaround Script** (run in project root):
+\`\`\`powershell
+npm run build
+npx vercel --prod
+\`\`\`

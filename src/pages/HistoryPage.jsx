@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../App';
 import { getScans, deleteScan } from '../services/scanService';
 import { exportToCSV, SCAN_COLUMNS } from '../services/csvExport';
 import { generateReport } from '../services/reportGenerator';

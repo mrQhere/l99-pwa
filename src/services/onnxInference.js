@@ -111,6 +111,14 @@ export async function runOfflineInference(imageBlob) {
 
   const classIdx = probabilities.indexOf(Math.max(...probabilities));
 
+  // For DR grades (0-4): map severity output. For other diseases (5-8): use classIdx directly.
+  let severityGrade;
+  if (classIdx <= 4) {
+    severityGrade = Math.min(4, Math.max(0, Math.round(severityScore * 4)));
+  } else {
+    severityGrade = classIdx; // Cataract=5, Glaucoma=6, AMD=7, Hypertensive=8
+  }
+
   return {
     success: true,
     demo_mode: false,
@@ -118,7 +126,7 @@ export async function runOfflineInference(imageBlob) {
     class_index: classIdx,
     confidence: Math.max(...probabilities),
     probabilities,
-    severity_grade: Math.min(4, Math.max(0, Math.round(severityScore * 4))),
+    severity_grade: severityGrade,
     severity_score: severityScore,
     uncertainty: -1, 
     heatmap_base64: null, 

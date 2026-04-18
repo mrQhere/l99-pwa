@@ -134,26 +134,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Diagnostic Logic Oversight */}
-      <div className="glass-card mb-24 no-hover">
-        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: 'var(--cyan)', textTransform: 'uppercase', letterSpacing: 1 }}>
-          Diagnostic Logic Distribution
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
-          {[
-            { label: 'Retinopathy', color: 'var(--cyan)', val: 'Primary' },
-            { label: 'Cataract', color: 'var(--magenta)', val: 'Integrated' },
-            { label: 'Glaucoma', color: 'var(--green)', val: 'Active' },
-            { label: 'AMD', color: 'var(--yellow)', val: 'Active' },
-            { label: 'vascular', color: 'var(--red)', val: 'Emergency' },
-          ].map(item => (
-            <div key={item.label} style={{ background: 'var(--bg-primary)', padding: '12px 16px', borderRadius: 12, border: `1px solid ${item.color}20` }}>
-              <div style={{ fontSize: 10, color: 'var(--text-dim)', textTransform: 'uppercase' }}>{item.label}</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: item.color, marginTop: 4 }}>{item.val}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+
 
       {/* System status */}
       <div className="glass-card no-hover">
