@@ -1,5 +1,7 @@
 # L99: Open Source Ophthalmic Diagnostic System 👁️
 
+![L99 System Banner](public/docs/banner.png)
+
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
@@ -13,6 +15,25 @@ In rural and underserved regions, the lack of immediate access to an ophthalmolo
 ## 🧠 System Architecture
 
 L99 utilizes a deeply optimized split-architecture system that fluidly transitions between edge-compute and cloud-compute based on network availability.
+
+```mermaid
+graph TD
+    subgraph Client ["Client Device (Offline/Edge)"]
+        A[Camera Capture] --> B[CLAHE Preprocessing]
+        B --> C{Network Status?}
+        C -- Offline --> D[ONNX WebEngine]
+        D --> E[IndexedDB Queue]
+    end
+
+    subgraph Cloud ["Cloud Engine (Online/REST)"]
+        C -- Online --> F[FastAPI Backend]
+        F --> G[EfficientNet-B4 + Grad-CAM]
+        G --> H[Supabase DB Sync]
+    end
+
+    E -- Automatic Sync --> F
+    H --> I[Detailed PDF Report]
+```
 
 ### 1. The Offline Edge Engine (Browser-Native)
 When operating in remote areas with zero connectivity, L99 falls back to a locally cached **MobileNetV3** neural network.
@@ -37,6 +58,11 @@ The architecture includes rudimentary hooks for Federated Learning. Rather than 
 * **Backend Inference**: Python, FastAPI, TensorFlow/Keras
 * **Database**: Supabase (PostgreSQL + RLS)
 * **Edge Inference**: ONNX WebAssembly
+
+---
+
+### 📘 Engineering Insights
+For a deep dive into the technical challenges faced during development (Camera APIs, ONNX conversion, and Backend hurdles), see the **[HURDLES.md](HURDLES.md)** document.
 
 ## 🚀 Quick Start Guide
 
