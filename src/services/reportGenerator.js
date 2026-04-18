@@ -49,7 +49,8 @@ export async function generateReport({ scan, patient, heatmapBase64, originalIma
   // Diagnosis box
   const severityGrade = scan.severity_grade || 0;
   const colors = [
-    [0, 255, 136], [0, 240, 255], [255, 184, 0], [255, 0, 110], [255, 51, 85]
+    [0, 255, 136], [0, 240, 255], [255, 184, 0], [255, 0, 110], [255, 51, 85],
+    [255, 0, 110], [150, 0, 255], [255, 100, 0], [255, 0, 0] // 5, 6, 7, 8
   ];
   const diagColor = colors[severityGrade] || colors[0];
 
@@ -225,6 +226,10 @@ function getPlainLanguage(grade) {
     'Moderate signs of diabetic retinopathy were detected. Blood vessels in the retina show some changes. A follow-up with an eye specialist is recommended to determine if treatment is needed.',
     'Severe signs of diabetic retinopathy were detected. Significant changes in the retinal blood vessels were found. Prompt referral to an ophthalmologist is strongly recommended.',
     'Advanced proliferative diabetic retinopathy was detected. New abnormal blood vessels are growing, which can lead to serious vision problems. Immediate specialist referral is critical.',
+    'Significant clouding of the lens (Cataract) detected. This typically requires surgical consultation for restoration of clear vision.',
+    'Optic nerve changes suggestive of Glaucoma detected. Early treatment is vital to prevent permanent peripheral vision loss.',
+    'Macular changes associated with Aging (AMD) detected. This affects central vision and requires immediate medical intervention.',
+    'Severe retinal vascular changes detected. Often linked to dangerous blood pressure levels. Seek cardiovascular evaluation.',
   ];
   return texts[grade] || texts[0];
 }

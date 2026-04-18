@@ -39,6 +39,8 @@ export default function ScanPage() {
   const [qualityData, setQualityData] = useState(null);
 
   const [manualPriority, setManualPriority] = useState('Auto');
+  const [captures, setCaptures] = useState([]);
+  const [irisSize, setIrisSize] = useState(150); // Default circle diameter
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -123,9 +125,26 @@ export default function ScanPage() {
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
     canvas.getContext('2d').drawImage(videoRef.current, 0, 0);
+    
     canvas.toBlob(async (blob) => {
-      stopCamera();
-      await handleImageSelected(blob);
+      const newCaptures = [...captures, blob];
+      setCaptures(newCaptures);
+      
+      if (newCaptures.length >= 2) {
+        stopCamera();
+        setProcessing(true);
+        setProcessingStep('Comparing captures for best quality...');
+        
+        // Automated Best of 2 selection
+        const scores = await Promise.all(newCaptures.map(b => computeQualityScore(b)));
+        const bestIdx = scores[0].qualityWeight >= scores[1].qualityWeight ? 0 : 1;
+        
+        showSuccess(`Best photo auto-selected (Quality: ${scores[bestIdx].qualityWeight.toFixed(2)})`);
+        await handleImageSelected(newCaptures[bestIdx]);
+        setProcessing(false);
+      } else {
+        showInfo('First photo captured! Now take a second one.');
+      }
     }, 'image/png');
   }
 
@@ -378,11 +397,48 @@ export default function ScanPage() {
           <div>
             <div className="camera-container">
               <video ref={videoRef} className="camera-video" autoPlay playsInline muted />
-              <div className="camera-overlay" />
+              
+              {/* Iris Alignment Overlay */}
+              <div className="camera-overlay">
+                <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0 }}>
+                  <defs>
+                    <mask id="iris-mask">
+                      <rect width="100%" height="100%" fill="white" />
+                      <circle cx="50%" cy="50%" r={irisSize / 2} fill="black" />
+                    </mask>
+                  </defs>
+                  <rect width="100%" height="100%" fill="rgba(0,0,0,0.4)" mask="url(#iris-mask)" />
+                  <circle 
+                    cx="50%" cy="50%" r={irisSize / 2} 
+                    fill="none" stroke="var(--cyan)" strokeWidth="2" strokeDasharray="10 5"
+                    style={{ filter: 'drop-shadow(0 0 5px var(--cyan))' }}
+                  />
+                  <text x="50%" y={`calc(50% + ${irisSize / 2 + 25}px)`} textAnchor="middle" fill="var(--cyan)" style={{ fontSize: 12, fontWeight: 700 }}>
+                    ALIGN IRIS HERE
+                  </text>
+                </svg>
+              </div>
+
+              {/* Iris Zoom Slider */}
+              <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, background: 'rgba(0,0,0,0.5)', padding: '15px 8px', borderRadius: 20 }}>
+                <span style={{ fontSize: 10, fontWeight: 900, color: '#fff' }}>+</span>
+                <input 
+                  type="range" min="100" max="250" value={irisSize} 
+                  onChange={(e) => setIrisSize(parseInt(e.target.value))}
+                  style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical', width: 8, height: 150 }}
+                />
+                <span style={{ fontSize: 10, fontWeight: 900, color: '#fff' }}>-</span>
+              </div>
             </div>
+
             <div className="camera-controls">
-              <button className="btn btn-secondary" onClick={stopCamera}>Cancel</button>
-              <button className="capture-btn" onClick={captureFromCamera} title="Capture" />
+              <button className="btn btn-secondary" onClick={() => { stopCamera(); setCaptures([]); }}>Cancel</button>
+              <div style={{ position: 'relative' }}>
+                <button className="capture-btn" onClick={captureFromCamera} title="Capture" />
+                <div style={{ position: 'absolute', top: -40, left: '50%', transform: 'translateX(-50%)', background: 'var(--cyan)', color: '#000', fontSize: 10, fontWeight: 900, padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap' }}>
+                  {captures.length === 0 ? 'PHOTO 1/2' : 'PHOTO 2/2'}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -421,11 +477,11 @@ export default function ScanPage() {
             </div>
 
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button className="btn btn-secondary" onClick={() => { setImageBlob(null); setImagePreview(null); setExifData(null); setQualityData(null); setManualPriority('Auto'); }}>
+              <button className="btn btn-secondary" onClick={() => { setImageBlob(null); setImagePreview(null); setExifData(null); setQualityData(null); setManualPriority('Auto'); setCaptures([]); }}>
                 <RefreshCw size={18} /> Retake
               </button>
               <button className="btn btn-primary btn-lg" onClick={runAnalysis}>
-                <Zap size={22} /> Analyze Image
+                <Zap size={22} /> Analyze Best Image
               </button>
             </div>
           </div>

@@ -20,7 +20,11 @@ export default function PatientsPage() {
   async function loadPatients() {
     setLoading(true);
     try {
-      const data = await getPatients();
+      let data = await getPatients();
+      // Filter if not master access
+      if (!operator.isMaster) {
+        data = data.filter(p => p.operator_id === operator.id);
+      }
       setPatients(data);
     } catch (e) { showError('Failed to load patients'); }
     setLoading(false);
@@ -30,7 +34,11 @@ export default function PatientsPage() {
     setSearch(q);
     if (!q.trim()) return loadPatients();
     try {
-      const results = await searchPatients(q);
+      let results = await searchPatients(q);
+      // Filter search results if not master
+      if (!operator.isMaster) {
+        results = results.filter(p => p.operator_id === operator.id);
+      }
       setPatients(results);
     } catch { /* ignore */ }
   }

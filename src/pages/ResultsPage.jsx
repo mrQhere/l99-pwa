@@ -113,6 +113,22 @@ export default function ResultsPage() {
             <p className="text-xs text-dim">{result.triage_timeframe}</p>
           </div>
 
+          {/* Medical Insights card */}
+          <div className="glass-card">
+            <div className="flex items-center gap-8 mb-16">
+              <CheckCircle size={18} className="text-cyan" />
+              <span className="text-xs text-dim" style={{ textTransform: 'uppercase', letterSpacing: 1 }}>Medical Insights</span>
+            </div>
+            <div className="text-sm" style={{ lineHeight: 1.6 }}>
+              {result.severity_grade === 0 && "Your retina appears healthy with no visible signs of retinopathy or vascular distress."}
+              {result.severity_grade >= 1 && result.severity_grade <= 4 && "Signs of Diabetic Retinopathy detected. This can lead to vision loss if blood sugar is not controlled. Microaneurysms or hemorrhages may be present."}
+              {result.severity_grade === 5 && "Clouding of the lens (Cataract) detected. This typically requires surgical consultation for restoration of clear vision."}
+              {result.severity_grade === 6 && "Optic nerve excavation or changes suggestive of Glaucoma detected. Early treatment is vital to prevent permanent peripheral vision loss."}
+              {result.severity_grade === 7 && "Macular changes associated with Aging (AMD) detected. This affects central vision and requires immediate dietary or medical intervention."}
+              {result.severity_grade === 8 && "Significant retinal vascular changes detected. This is often a sign of high blood pressure (Hypertensive Crisis). Seek medical evaluation for systemic health."}
+            </div>
+          </div>
+
           {/* Class probabilities */}
           <div className="glass-card">
             <span className="text-xs text-dim" style={{ textTransform: 'uppercase', letterSpacing: 1 }}>

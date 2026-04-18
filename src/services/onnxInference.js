@@ -16,10 +16,17 @@ export async function loadONNXModel() {
     if (session) return true;
 
     const ort = await import('onnxruntime-web');
-    ort.env.wasm.wasmPaths = '/';
+    
+    // Ensure WASM files are loaded from the root public directory
+    const path = window.location.origin + '/';
+    ort.env.wasm.wasmPaths = path;
+    
+    // Enable SIMD and JEP if available in the browser
+    ort.env.wasm.numThreads = navigator.hardwareConcurrency || 4;
 
     session = await ort.InferenceSession.create('/mobilenetv3_eyescan.onnx', {
       executionProviders: ['wasm'],
+      graphOptimizationLevel: 'all'
     });
 
     console.log('ONNX model loaded successfully');
@@ -31,7 +38,7 @@ export async function loadONNXModel() {
 }
 
 /**
- * Run offline inference using MobileNetV3 ONNX model.
+ * Run offline inference using MobileNetV3 ONNX model (NCHW format).
  * @param {Blob} imageBlob - Preprocessed image
  * @returns {Promise<Object>} Prediction result
  */
@@ -57,15 +64,24 @@ export async function runOfflineInference(imageBlob) {
   const imageData = ctx.getImageData(0, 0, 224, 224);
   const { data } = imageData;
 
-  // Create float32 tensor [1, 224, 224, 3] normalized to [0, 1]
-  const float32Data = new Float32Array(1 * 224 * 224 * 3);
+  /**
+   * Create float32 tensor [1, 3, 224, 224] (NCHW)
+   * Standard ImageNet Normalization: (x - mean) / std
+   */
+  const float32Data = new Float32Array(1 * 3 * 224 * 224);
+  const mean = [0.485, 0.456, 0.406];
+  const std = [0.229, 0.224, 0.225];
+
   for (let i = 0; i < 224 * 224; i++) {
-    float32Data[i * 3] = data[i * 4] / 255.0;
-    float32Data[i * 3 + 1] = data[i * 4 + 1] / 255.0;
-    float32Data[i * 3 + 2] = data[i * 4 + 2] / 255.0;
+    // Red channel
+    float32Data[i] = ((data[i * 4] / 255.0) - mean[0]) / std[0];
+    // Green channel
+    float32Data[i + 224 * 224] = ((data[i * 4 + 1] / 255.0) - mean[1]) / std[1];
+    // Blue channel
+    float32Data[i + 2 * 224 * 224] = ((data[i * 4 + 2] / 255.0) - mean[2]) / std[2];
   }
 
-  const inputTensor = new ort.Tensor('float32', float32Data, [1, 224, 224, 3]);
+  const inputTensor = new ort.Tensor('float32', float32Data, [1, 3, 224, 224]);
 
   // Run inference
   const feeds = {};
@@ -78,15 +94,16 @@ export async function runOfflineInference(imageBlob) {
   let probabilities;
   let severityScore = 0;
 
-  // Try to get classification output
+  // Try to get classification output (usually the first output)
   const clsOutput = results['classification'] || results[session.outputNames[0]];
   if (clsOutput) {
     probabilities = Array.from(clsOutput.data);
   } else {
-    probabilities = [0.2, 0.2, 0.2, 0.2, 0.2];
+    // Fallback for 6 classes if output is missing
+    probabilities = new Array(CLASS_NAMES.length).fill(1 / CLASS_NAMES.length);
   }
 
-  // Try to get severity output
+  // Try to get severity output (usually the second output)
   const sevOutput = results['severity'] || results[session.outputNames[1]];
   if (sevOutput) {
     severityScore = sevOutput.data[0];
@@ -97,15 +114,15 @@ export async function runOfflineInference(imageBlob) {
   return {
     success: true,
     demo_mode: false,
-    diagnosis: CLASS_NAMES[classIdx],
+    diagnosis: CLASS_NAMES[classIdx] || 'Unknown',
     class_index: classIdx,
     confidence: Math.max(...probabilities),
     probabilities,
     severity_grade: Math.min(4, Math.max(0, Math.round(severityScore * 4))),
     severity_score: severityScore,
-    uncertainty: -1, // Unknown for single-pass offline inference
-    heatmap_base64: null, // No Grad-CAM offline
-    model_used: 'mobilenetv3_offline_onnx',
+    uncertainty: -1, 
+    heatmap_base64: null, 
+    model_used: 'mobilenetv3_offline_onnx_nchw',
     mc_passes: 0,
     quality_weight: 1.0,
   };

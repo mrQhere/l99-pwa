@@ -26,15 +26,18 @@ export default function DashboardPage() {
 
   async function loadStats() {
     try {
-      const [patients, scans, people, queued, recent] = await Promise.all([
-        getPatientCount().catch(() => 0),
-        getScanCount().catch(() => 0),
-        getPeopleCount().catch(() => 0),
+      // For restricted operators, stats should only reflect THEIR work
+      const filters = !operator.isMaster ? { operatorId: operator.id } : {};
+      
+      const [patients, scans, queued, recent] = await Promise.all([
+        getPatientCount(filters).catch(() => 0),
+        getScanCount(filters).catch(() => 0),
         getQueueCount().catch(() => 0),
-        getRecentStats().catch(() => ({ thisWeek: 0, urgent: 0 })),
+        getRecentStats(filters).catch(() => ({ thisWeek: 0, urgent: 0 })),
       ]);
+      
       setStats({
-        patients, scans, people, queued,
+        patients, scans, queued,
         weekScans: recent.thisWeek,
         urgentScans: recent.urgent,
       });
@@ -131,6 +134,27 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Diagnostic Logic Oversight */}
+      <div className="glass-card mb-24 no-hover">
+        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: 'var(--cyan)', textTransform: 'uppercase', letterSpacing: 1 }}>
+          Diagnostic Logic Distribution
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
+          {[
+            { label: 'Retinopathy', color: 'var(--cyan)', val: 'Primary' },
+            { label: 'Cataract', color: 'var(--magenta)', val: 'Integrated' },
+            { label: 'Glaucoma', color: 'var(--green)', val: 'Active' },
+            { label: 'AMD', color: 'var(--yellow)', val: 'Active' },
+            { label: 'vascular', color: 'var(--red)', val: 'Emergency' },
+          ].map(item => (
+            <div key={item.label} style={{ background: 'var(--bg-primary)', padding: '12px 16px', borderRadius: 12, border: `1px solid ${item.color}20` }}>
+              <div style={{ fontSize: 10, color: 'var(--text-dim)', textTransform: 'uppercase' }}>{item.label}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: item.color, marginTop: 4 }}>{item.val}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* System status */}
       <div className="glass-card no-hover">
         <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: 'var(--text-secondary)' }}>
@@ -140,7 +164,7 @@ export default function DashboardPage() {
           <StatusItem label="Cloud Network" status={isOnline ? 'Active' : 'Offline'} color={isOnline ? 'green' : 'yellow'} />
           <StatusItem label="Offline Engine" status="Ready" color="green" />
           <StatusItem label="Database" status={isOnline ? 'Connected' : 'Local Cache'} color={isOnline ? 'green' : 'yellow'} />
-          <StatusItem label="Version" status="v1.0.0" color="cyan" />
+          <StatusItem label="Diagnostic Wave" status="New Wave (Multi-Headed)" color="cyan" />
         </div>
       </div>
     </div>

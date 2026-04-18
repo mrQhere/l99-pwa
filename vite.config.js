@@ -25,15 +25,15 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2,wasm}'],
-        maximumFileSizeToCacheInBytes: 35 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2,wasm,mjs}'],
+        maximumFileSizeToCacheInBytes: 50 * 1024 * 1024,
         runtimeCaching: [
           {
-            urlPattern: /\.onnx$/,
+            urlPattern: ({ url }) => url.pathname.endsWith('.onnx') || url.pathname.endsWith('.wasm') || url.pathname.endsWith('.mjs'),
             handler: 'CacheFirst',
             options: {
-              cacheName: 'onnx-models',
-              expiration: { maxEntries: 2, maxAgeSeconds: 30 * 24 * 60 * 60 }
+              cacheName: 'onnx-assets',
+              expiration: { maxEntries: 20, maxAgeSeconds: 30 * 24 * 60 * 60 }
             }
           },
           {

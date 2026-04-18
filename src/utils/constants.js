@@ -14,10 +14,20 @@ export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Operator credentials (hardcoded login)
 export const OPERATORS = {
-  '001': { password: 'admin', name: 'Operator Alpha', role: 'Senior Screener' },
-  '100': { password: 'admin', name: 'Operator Bravo', role: 'Field Worker' },
-  '007': { password: 'admin', name: 'Operator Charlie', role: 'Clinical Lead' },
-  '009': { password: 'admin', name: 'Operator Delta', role: 'Research Analyst' },
+  '001': { 
+    password: 'admin', 
+    name: 'Clinician Unit 01', 
+    role: 'Screener',
+    doctorName: 'Dr. Vision Support',
+    isMaster: false 
+  },
+  '007': { 
+    password: 'admin1', 
+    name: 'L99 Master Executive', 
+    role: 'Clinical Lead / Admin',
+    doctorName: 'Global AI Center',
+    isMaster: true 
+  },
 };
 
 // Disease classes
@@ -27,15 +37,23 @@ export const CLASS_NAMES = [
   'Moderate DR',
   'Severe DR',
   'Proliferative DR',
+  'Cataract',
+  'Glaucoma Suspect',
+  'Macular Degeneration',
+  'Hypertensive Retinopathy',
 ];
 
 // Severity labels
 export const SEVERITY_LABELS = {
-  0: 'Grade 0 — No Apparent DR',
+  0: 'Grade 0 — Healthy / No Apparent DR',
   1: 'Grade 1 — Mild NPDR',
   2: 'Grade 2 — Moderate NPDR',
   3: 'Grade 3 — Severe NPDR',
   4: 'Grade 4 — Proliferative DR',
+  5: 'Cataract Findings',
+  6: 'Glaucoma Risk Detected',
+  7: 'Macular Changes (AMD)',
+  8: 'Vascular Changes (High BP)',
 };
 
 // Triage levels

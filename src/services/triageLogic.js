@@ -13,12 +13,32 @@ export function computeTriage(severityGrade, confidence, uncertainty = 0) {
   // High uncertainty → escalate
   const highUncertainty = uncertainty > 0.15;
 
+  // ── Emergency Conditions ──
+  if (severityGrade >= 8) { // Hypertensive Retinopathy - Crisis
+    return {
+      level: TRIAGE_LEVELS.EMERGENCY,
+      action: 'CRITICAL: Severe vascular changes. Check blood pressure and refer to Emergency Care.',
+      timeframe: 'Immediate',
+      color: 'red',
+    };
+  }
+
   if (severityGrade >= 4 || (severityGrade >= 3 && confidence > 0.8)) {
     return {
       level: TRIAGE_LEVELS.EMERGENCY,
-      action: 'Immediate ophthalmology referral required',
+      action: 'Immediate ophthalmology referral required (Vision Loss Risk)',
       timeframe: 'Within 24 hours',
       color: 'red',
+    };
+  }
+
+  // ── Urgent Conditions ──
+  if (severityGrade === 6 || severityGrade === 7) { // Glaucoma / AMD
+    return {
+      level: TRIAGE_LEVELS.URGENT,
+      action: 'Specialist consultation for neurological or macular changes.',
+      timeframe: 'Within 72 hours',
+      color: 'magenta',
     };
   }
 
@@ -28,6 +48,16 @@ export function computeTriage(severityGrade, confidence, uncertainty = 0) {
       action: 'Refer to ophthalmologist for detailed examination',
       timeframe: 'Within 1 week',
       color: 'magenta',
+    };
+  }
+
+  // ── Priority Conditions ──
+  if (severityGrade === 5) { // Cataract
+    return {
+      level: TRIAGE_LEVELS.PRIORITY,
+      action: 'Routine referral for surgical consultation.',
+      timeframe: 'Within 1-2 months',
+      color: 'yellow',
     };
   }
 

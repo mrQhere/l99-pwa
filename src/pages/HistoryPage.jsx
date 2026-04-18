@@ -8,6 +8,7 @@ import { History, Download, Trash2, Eye, FileText, Search } from 'lucide-react';
 
 export default function HistoryPage() {
   const navigate = useNavigate();
+  const { operator } = useAuth();
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -16,7 +17,16 @@ export default function HistoryPage() {
 
   async function loadScans() {
     setLoading(true);
-    try { setScans(await getScans({ limit: 100 })); } catch { showError('Failed to load history'); }
+    try { 
+      let allScans = await getScans({ limit: 100 });
+      // Filter if not master access
+      if (!operator.isMaster) {
+        allScans = allScans.filter(s => s.operator_id === operator.id);
+      }
+      setScans(allScans);
+    } catch { 
+      showError('Failed to load history'); 
+    }
     setLoading(false);
   }
 
@@ -92,6 +102,7 @@ export default function HistoryPage() {
                 <th>Date</th>
                 <th>Patient</th>
                 <th>Diagnosis</th>
+                <th>Doctor / Unit</th>
                 <th>Grade</th>
                 <th>Confidence</th>
                 <th>Triage</th>
@@ -107,6 +118,7 @@ export default function HistoryPage() {
                   <td style={{ color: severityColors[s.severity_grade] || 'var(--text-primary)' }}>
                     {s.diagnosis}
                   </td>
+                  <td className="text-xs">{operator.doctorName}</td>
                   <td>
                     <span className={`severity-badge severity-${s.severity_grade}`}>
                       G{s.severity_grade}

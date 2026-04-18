@@ -37,6 +37,7 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   const [scanResult, setScanResult] = useState(null);
   const [backendStatus, setBackendStatus] = useState('checking');
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   useEffect(() => {
     if (!isOnline) {
@@ -64,6 +65,7 @@ export default function App() {
     const handleInstallPrompt = (e) => {
       e.preventDefault();
       window.deferredPrompt = e;
+      setShowInstallPrompt(true);
     };
     
     window.addEventListener('online', goOnline);
@@ -111,6 +113,28 @@ export default function App() {
     <AuthContext.Provider value={{ operator, login, logout }}>
       <ScanContext.Provider value={{ scanResult, setScanResult }}>
         <div className="particle-bg" />
+
+        {/* PWA Install Banner */}
+        {showInstallPrompt && (
+          <div className="pwa-install-banner">
+            <Eye size={20} className="text-cyan" />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>GET EYE SCAN APP</div>
+              <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>Fast, offline diagnostics</div>
+            </div>
+            <button className="btn btn-primary btn-sm" style={{ borderRadius: 20 }} onClick={async () => {
+              const promptEvent = window.deferredPrompt;
+              if (promptEvent) {
+                promptEvent.prompt();
+                const { outcome } = await promptEvent.userChoice;
+                if (outcome === 'accepted') setShowInstallPrompt(false);
+              }
+            }}>Install</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => setShowInstallPrompt(false)}>
+              <X size={16} />
+            </button>
+          </div>
+        )}
 
         {/* Toast notifications */}
         <div className="toast-container">
@@ -199,6 +223,23 @@ export default function App() {
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
+            
+            <footer style={{ marginTop: 'auto', padding: '40px 20px', textAlign: 'center', borderTop: '1px solid var(--border-subtle)', background: 'rgba(0,0,0,0.2)' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, color: 'var(--cyan)', opacity: 0.8 }}>
+                L99 EYE SCAN SYSTEM
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 8 }}>
+                Ophthalmic Intelligence for Global Accessibility
+              </div>
+              <div style={{ marginTop: 20, fontSize: 14, fontWeight: 600, color: '#fff', textTransform: 'uppercase', letterSpacing: 2 }}>
+                We are here to help
+              </div>
+              <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center', gap: 20 }}>
+                {['Support', 'Privacy', 'Compliance', 'Research'].map(link => (
+                  <span key={link} style={{ fontSize: 10, color: 'var(--text-dim)', cursor: 'pointer' }}>{link}</span>
+                ))}
+              </div>
+            </footer>
           </main>
         </div>
       </ScanContext.Provider>
