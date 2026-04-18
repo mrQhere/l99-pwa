@@ -40,6 +40,13 @@ Building a clinical-grade medical PWA that operates in zero-connectivity environ
 - **Manual Pre-Caching**: We expanded the `workbox` configuration to explicitly include the `models/` directory in the precache manifest.
 - **Sync Logic**: Implemented a "Sync Indicator" that ensures the user stays online until the local model store is 100% verified.
 
+## 6. Modernizing the Inference Pipeline (New Wave)
+**The Problem**: Our initial implementation used a mismatched tensor format (NHWC) and lacked standard normalization, resulting in erratic results. Additionally, ONNX WASM binaries were failing to load due to missing glue code (`.mjs`) in the production bundle.
+**The Solution**:
+- **NCHW Transition**: We refactored the inference engine to use **Channel-First (NCHW)** tensors and **ImageNet Normalization**. This aligned the browser inference 100% with the Kaggle training logic.
+- **WASM Synchronization**: Created an automated `wasm-sync.ps1` script to ensure all specialized `.mjs` and `.wasm` files are correctly bundled in the `public/` directory for zero-error initialization on Vercel.
+- **Dynamic Capture Logic**: Implemented a "Best of 2" capture heuristic and adjustable Iris Circle guides to minimize movement artifacts during image acquisition.
+
 ---
 
 > [!TIP]
